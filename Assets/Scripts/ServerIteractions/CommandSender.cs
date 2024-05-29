@@ -26,7 +26,7 @@ public class CommandSender : MonoBehaviour
     public async void SendCommand(string command)
     {
         string response = await SendCommandToServer("CMD:"+command); // Envía el comando al servidor y espera la respuesta
-        responseText.text = response; // Muestra la respuesta del servidor en la UI
+        Debug.Log(response);
     }
 
     public async Task<string> SendCommandToServer(string command)

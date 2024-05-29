@@ -40,7 +40,7 @@ public class CommandCatch : MonoBehaviour
             textFilesData.Add(fileData);
             CommandButtonConfigurator CommandButton = Instantiate(CommandButtonPrefab, CommandButtonParent);
             _buttons.Add(CommandButton.gameObject);
-            CommandButton.InitializeButton(fileData);
+            CommandButton.InitializeButton(fileData,sender);
         }
 
         // Ahora la lista 'textFilesData' contiene la información de todos los archivos TXT en la carpeta
