@@ -84,6 +84,7 @@ public class ServerDiscovery : MonoBehaviour
                     await ReceiveFiles(stream);
                     commandCatch.ReadTextFiles();
 
+
                 }
             }
         }

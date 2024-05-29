@@ -23,10 +23,9 @@ public class CommandSender : MonoBehaviour
         serverIP = ip; // Método para establecer la IP del servidor
     }
 
-    async void SendCommand()
+    public async void SendCommand(string command)
     {
-        string command = commandInputField.text; // Obtiene el comando ingresado en el campo de entrada de texto
-        string response = await SendCommandToServer(command); // Envía el comando al servidor y espera la respuesta
+        string response = await SendCommandToServer("CMD:"+command); // Envía el comando al servidor y espera la respuesta
         responseText.text = response; // Muestra la respuesta del servidor en la UI
     }
 

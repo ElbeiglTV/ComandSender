@@ -513,6 +513,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   discoveredServersText: {fileID: 571344487}
   commandSender: {fileID: 473177839}
+  commandCatch: {fileID: 473177843}
   buttonController: {fileID: 473177842}
   serverButtonPrefab: {fileID: 1111550657517302039, guid: de88501a262efa94eb52acc39db66afb, type: 3}
   contentParent: {fileID: 257461460}
@@ -589,6 +590,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   folderPath: Commands
+  sender: {fileID: 473177839}
   CommandButtonPrefab: {fileID: 4625962951468751535, guid: 2b1f76e6cdccee2499ffce72619147fd, type: 3}
   CommandButtonParent: {fileID: 1574205977}
 --- !u!1 &571344486
