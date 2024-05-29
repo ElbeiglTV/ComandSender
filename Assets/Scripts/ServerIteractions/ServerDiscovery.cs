@@ -59,82 +59,85 @@ public class ServerDiscovery : MonoBehaviour
     {
         commandSender.SetServerIP(serverIP);
         discoveredServersText.text = $"Selected server: {serverIP}";
-        SendCommandToServer("GET_COMMANDS");
+        ConnectAndReceiveFiles(serverIP);
     }
 
-    private async void SendCommandToServer(string command)
+    public async void ConnectAndReceiveFiles(string serverIP)
     {
-        using (TcpClient client = new TcpClient())
+        try
         {
-            try
+            using (TcpClient client = new TcpClient())
             {
-                Debug.Log($"Connecting to server {commandSender.serverIP}:{commandSender.serverPort}...");
-                client.ReceiveTimeout = 5000;  // Tiempo de espera para recibir datos
-                client.SendTimeout = 5000;     // Tiempo de espera para enviar datos
+                Debug.Log("Connecting to server...");
+                await client.ConnectAsync(serverIP, commandSender.serverPort);
+                Debug.Log("Connected to server.");
 
-                await client.ConnectAsync(commandSender.serverIP, commandSender.serverPort);
-                NetworkStream stream = client.GetStream();
-                byte[] data = Encoding.ASCII.GetBytes(command);
-                await stream.WriteAsync(data, 0, data.Length);
-
-                Debug.Log("Command sent, waiting for response...");
-
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                StringBuilder response = new StringBuilder();
-
-                // Aumentar el tiempo de espera de lectura en el stream
-                stream.ReadTimeout = 10000;  // 10 segundos de tiempo de espera
-
-                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                using (NetworkStream stream = client.GetStream())
                 {
-                    response.Append(Encoding.ASCII.GetString(buffer, 0, bytesRead));
-                }
+                    // Enviar comando para obtener archivos
+                    byte[] request = Encoding.UTF8.GetBytes("GET_COMMANDS");
+                    await stream.WriteAsync(request, 0, request.Length);
+                    Debug.Log("Command sent, waiting for response...");
 
-                Debug.Log("Response received: " + response.ToString());
-                ProcessReceivedCommands(response.ToString());
-            }
-            catch (SocketException e)
-            {
-                Debug.LogError("SocketException: " + e);
-            }
-            catch (IOException e)
-            {
-                Debug.LogError("IOException: " + e);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("Exception: " + e);
-            }
-        }
-    }
-
-    private void ProcessReceivedCommands(string response)
-    {
-        Debug.Log("Processing received commands...");
-        string[] fileEntries = response.Split(new string[] { "\n" }, System.StringSplitOptions.None);
-
-        foreach (string entry in fileEntries)
-        {
-            if (!string.IsNullOrWhiteSpace(entry))
-            {
-                string[] fileData = entry.Split(new char[] { '|' }, 2);
-                if (fileData.Length == 2)
-                {
-                    string fileName = fileData[0];
-                    string fileContent = fileData[1];
-
-                    string path = Path.Combine(Application.persistentDataPath, fileName);
-                    File.WriteAllText(path, fileContent);
-
-                    Debug.Log($"File saved: {path}");
-                }
-                else
-                {
-                    Debug.LogWarning("Invalid file entry: " + entry);
+                    // Recibir archivos del servidor
+                    await ReceiveFiles(stream);
                 }
             }
         }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Exception: {ex.Message}");
+        }
+    }
+
+    private async Task ReceiveFiles(NetworkStream stream)
+    {
+        while (true)
+        {
+            // Leer la longitud del nombre del archivo
+            byte[] lengthBuffer = new byte[4];
+            int bytesRead = await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length);
+            if (bytesRead != 4) break;
+
+            int fileNameLength = BitConverter.ToInt32(lengthBuffer, 0);
+            if (fileNameLength == 0) break; // No más archivos
+
+            // Leer el nombre del archivo
+            byte[] fileNameBuffer = new byte[fileNameLength];
+            bytesRead = await stream.ReadAsync(fileNameBuffer, 0, fileNameBuffer.Length);
+            if (bytesRead != fileNameLength) break;
+
+            string fileName = Encoding.UTF8.GetString(fileNameBuffer);
+
+            // Leer la longitud del contenido del archivo
+            bytesRead = await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length);
+            if (bytesRead != 4) break;
+
+            int fileContentLength = BitConverter.ToInt32(lengthBuffer, 0);
+
+            // Leer el contenido del archivo
+            byte[] fileContentBuffer = new byte[fileContentLength];
+            int totalBytesRead = 0;
+            while (totalBytesRead < fileContentLength)
+            {
+                bytesRead = await stream.ReadAsync(fileContentBuffer, totalBytesRead, fileContentLength - totalBytesRead);
+                if (bytesRead == 0) break;
+                totalBytesRead += bytesRead;
+            }
+
+            if (totalBytesRead != fileContentLength) break;
+
+            // Guardar el archivo
+            SaveFile(fileName, fileContentBuffer);
+        }
+    }
+
+    private void SaveFile(string fileName, byte[] fileContent)
+    {
+        if (!Directory.Exists(Application.dataPath + "/Commands" + "/" + commandSender.serverIP)) Directory.CreateDirectory(Application.dataPath + "/Commands" + "/" + commandSender.serverIP);
+        string filePath = Path.Combine(Application.dataPath+"/Commands"+"/"+commandSender.serverIP, fileName);
+        File.WriteAllBytes(filePath, fileContent);
+        Debug.Log($"File saved: {filePath}");
     }
 
     private void OnDestroy()

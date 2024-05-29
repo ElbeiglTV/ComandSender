@@ -3,6 +3,7 @@ import os
 import socket
 import threading
 import time
+import struct
 
 # Configuración del servidor
 HOST = '0.0.0.0'          # Escuchar en todas las interfaces
@@ -35,18 +36,23 @@ def handle_client(client_socket):
             print(f"Error: {str(e)}")
             break
     client_socket.close()
-    
+
 def send_command_files(client_socket):
     command_files = os.listdir(COMMANDS_FOLDER)
-    response = []
     for file_name in command_files:
         file_path = os.path.join(COMMANDS_FOLDER, file_name)
-        with open(file_path, 'r') as file:
+        with open(file_path, 'rb') as file:
             file_content = file.read()
-            response.append(f"{file_name}|{file_content}")
-    
-    response_message = "\n".join(response)
-    client_socket.send(response_message.encode())
+            # Enviar el nombre del archivo
+            file_name_bytes = file_name.encode()
+            client_socket.send(struct.pack('I', len(file_name_bytes)))
+            client_socket.send(file_name_bytes)
+            # Enviar el contenido del archivo
+            client_socket.send(struct.pack('I', len(file_content)))
+            client_socket.send(file_content)
+
+    # Enviar señal de finalización
+    client_socket.send(struct.pack('I', 0))
 
 def main():
     if not os.path.exists(COMMANDS_FOLDER):
