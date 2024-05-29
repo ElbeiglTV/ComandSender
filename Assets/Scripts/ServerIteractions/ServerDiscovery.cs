@@ -13,6 +13,7 @@ public class ServerDiscovery : MonoBehaviour
 {
     public TMP_Text discoveredServersText;
     public CommandSender commandSender;
+    public ButtonController buttonController;
     public GameObject serverButtonPrefab;
     public Transform contentParent;
 
@@ -50,6 +51,8 @@ public class ServerDiscovery : MonoBehaviour
         GameObject newButton = Instantiate(serverButtonPrefab, contentParent);
         newButton.GetComponentInChildren<TMP_Text>().text = serverIP;
         newButton.GetComponent<Button>().onClick.AddListener(() => OnServerSelected(serverIP));
+        buttonController.ServerButons.Add(newButton.GetComponent<Button>());
+        buttonController.InitialiseButtons();
     }
 
     private void OnServerSelected(string serverIP)
