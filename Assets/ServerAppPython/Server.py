@@ -26,28 +26,27 @@ def handle_client(client_socket):
                 break
             if command.lower() == 'exit':
                 break
-            #if command == 'GET_COMMANDS':
-                #send_command_files(client_socket)
+            if command == 'GET_COMMANDS':
+                send_command_files(client_socket)
             else:
                 # Ejecutar comando de consola, etc...
                 pass
         except Exception as e:
-            client_socket.send(f"Error: {str(e)}".encode())
+            print(f"Error: {str(e)}")
             break
     client_socket.close()
-
+    
 def send_command_files(client_socket):
     command_files = os.listdir(COMMANDS_FOLDER)
+    response = []
     for file_name in command_files:
-        with open(os.path.join(COMMANDS_FOLDER, file_name), 'r') as file:
+        file_path = os.path.join(COMMANDS_FOLDER, file_name)
+        with open(file_path, 'r') as file:
             file_content = file.read()
-            # Envía el nombre del archivo y su contenido como dos strings separados
-            client_socket.send(file_name.encode())
-            time.sleep(0.1)  # Espera breve entre cada envío
-            client_socket.send(file_content.encode())
-            time.sleep(0.1)  # Espera breve entre cada envío
-    # Envía una marca de finalización para indicar que se han enviado todos los archivos
-    client_socket.send(b"END_OF_FILES")
+            response.append(f"{file_name}|{file_content}")
+    
+    response_message = "\n".join(response)
+    client_socket.send(response_message.encode())
 
 def main():
     if not os.path.exists(COMMANDS_FOLDER):

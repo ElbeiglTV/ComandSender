@@ -1,17 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
-using System.Collections.Generic;
+using System;
 
 public class ServerDiscovery : MonoBehaviour
 {
     public TMP_Text discoveredServersText;
     public CommandSender commandSender;
-    public ButtonController buttonController;
     public GameObject serverButtonPrefab;
     public Transform contentParent;
 
@@ -19,9 +20,6 @@ public class ServerDiscovery : MonoBehaviour
     private UdpClient udpClient;
     private bool isListening;
     private HashSet<string> discoveredServers = new HashSet<string>();
-
-    private const int bufferSize = 1024; // Tamaño del búfer para recibir datos
-    private string savePath = "/CommandFiles"; // Directorio para guardar los archivos de comandos
 
     void Start()
     {
@@ -44,10 +42,6 @@ public class ServerDiscovery : MonoBehaviour
                     CreateServerButton(serverIP);
                 }
             }
-            else
-            {
-                SaveCommandFile(message);
-            }
         }
     }
 
@@ -56,34 +50,88 @@ public class ServerDiscovery : MonoBehaviour
         GameObject newButton = Instantiate(serverButtonPrefab, contentParent);
         newButton.GetComponentInChildren<TMP_Text>().text = serverIP;
         newButton.GetComponent<Button>().onClick.AddListener(() => OnServerSelected(serverIP));
-        buttonController.ServerButons.Add(newButton.GetComponent<Button>());
-        buttonController.InitialiseButtons();
     }
 
     private void OnServerSelected(string serverIP)
     {
         commandSender.SetServerIP(serverIP);
         discoveredServersText.text = $"Selected server: {serverIP}";
-
-        //commandSender.SendCommandToServer("GET_COMMANDS");
+        SendCommandToServer("GET_COMMANDS");
     }
 
-    private void SaveCommandFile(string fileData)
+    private async void SendCommandToServer(string command)
     {
-        // Crear el directorio si no existe
-        string directoryPath = Application.dataPath + savePath;
-        if (!Directory.Exists(directoryPath))
+        using (TcpClient client = new TcpClient())
         {
-            Directory.CreateDirectory(directoryPath);
+            try
+            {
+                Debug.Log($"Connecting to server {commandSender.serverIP}:{commandSender.serverPort}...");
+                client.ReceiveTimeout = 5000;  // Tiempo de espera para recibir datos
+                client.SendTimeout = 5000;     // Tiempo de espera para enviar datos
+
+                await client.ConnectAsync(commandSender.serverIP, commandSender.serverPort);
+                NetworkStream stream = client.GetStream();
+                byte[] data = Encoding.ASCII.GetBytes(command);
+                await stream.WriteAsync(data, 0, data.Length);
+
+                Debug.Log("Command sent, waiting for response...");
+
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                StringBuilder response = new StringBuilder();
+
+                // Aumentar el tiempo de espera de lectura en el stream
+                stream.ReadTimeout = 10000;  // 10 segundos de tiempo de espera
+
+                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    response.Append(Encoding.ASCII.GetString(buffer, 0, bytesRead));
+                }
+
+                Debug.Log("Response received: " + response.ToString());
+                ProcessReceivedCommands(response.ToString());
+            }
+            catch (SocketException e)
+            {
+                Debug.LogError("SocketException: " + e);
+            }
+            catch (IOException e)
+            {
+                Debug.LogError("IOException: " + e);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("Exception: " + e);
+            }
         }
+    }
 
-        // Generar un nombre único para el archivo
-        string fileName = "command_" + System.DateTime.Now.ToString("yyyyMMddHHmmss") + ".txt";
-        string filePath = Path.Combine(directoryPath, fileName);
+    private void ProcessReceivedCommands(string response)
+    {
+        Debug.Log("Processing received commands...");
+        string[] fileEntries = response.Split(new string[] { "\n" }, System.StringSplitOptions.None);
 
-        // Escribir los datos del archivo
-        File.WriteAllText(filePath, fileData);
-        Debug.Log("Archivo de comando guardado: " + filePath);
+        foreach (string entry in fileEntries)
+        {
+            if (!string.IsNullOrWhiteSpace(entry))
+            {
+                string[] fileData = entry.Split(new char[] { '|' }, 2);
+                if (fileData.Length == 2)
+                {
+                    string fileName = fileData[0];
+                    string fileContent = fileData[1];
+
+                    string path = Path.Combine(Application.persistentDataPath, fileName);
+                    File.WriteAllText(path, fileContent);
+
+                    Debug.Log($"File saved: {path}");
+                }
+                else
+                {
+                    Debug.LogWarning("Invalid file entry: " + entry);
+                }
+            }
+        }
     }
 
     private void OnDestroy()
