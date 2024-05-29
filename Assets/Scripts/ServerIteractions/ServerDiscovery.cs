@@ -13,6 +13,7 @@ public class ServerDiscovery : MonoBehaviour
 {
     public TMP_Text discoveredServersText;
     public CommandSender commandSender;
+    public CommandCatch commandCatch;
     public ButtonController buttonController;
     public GameObject serverButtonPrefab;
     public Transform contentParent;
@@ -81,6 +82,8 @@ public class ServerDiscovery : MonoBehaviour
 
                     // Recibir archivos del servidor
                     await ReceiveFiles(stream);
+                    commandCatch.ReadTextFiles();
+
                 }
             }
         }
