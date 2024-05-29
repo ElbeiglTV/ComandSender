@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class CommandCatch : MonoBehaviour
 {
-    public string folderPath; // Ruta de la carpeta que contiene los archivos TXT
     public CommandSender sender;
     public List<CommandData> textFilesData = new List<CommandData>();
     List<GameObject> _buttons = new List<GameObject>();
@@ -22,20 +21,21 @@ public class CommandCatch : MonoBehaviour
         _buttons.Clear();
 
         // Verifica que la carpeta exista
-        if (!Directory.Exists(Application.dataPath + "/Commands" + "/" + sender.serverIP))
+        if (!Directory.Exists(Application.persistentDataPath + "/Commands" + "/" + sender.serverIP))
         {
-            Debug.LogError("La carpeta especificada no existe.  " + Application.dataPath + "/Commands" + "/" + sender.serverIP);
+            Debug.LogError("La carpeta especificada no existe.  " + Application.persistentDataPath + "/Commands" + "/" + sender.serverIP);
             return;
         }
 
+
         // Obtiene la lista de archivos TXT en la carpeta
-        string[] txtFiles = Directory.GetFiles(Application.dataPath + "/Commands" + "/" + sender.serverIP, "*.txt");
+        string[] txtFiles = Directory.GetFiles(Application.persistentDataPath + "/Commands" + "/" + sender.serverIP, "*.txt");
 
         // Lee cada archivo TXT y guarda su nombre y contenido en la lista
         foreach (string filePath in txtFiles)
         {
             CommandData fileData = new CommandData();
-            fileData.fileName = Path.GetFileName(filePath);
+            fileData.fileName = Path.GetFileName(filePath).Replace(".txt","");
             fileData.fileContent = File.ReadAllText(filePath);
             textFilesData.Add(fileData);
             CommandButtonConfigurator CommandButton = Instantiate(CommandButtonPrefab, CommandButtonParent);

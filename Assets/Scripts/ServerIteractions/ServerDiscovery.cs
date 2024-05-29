@@ -62,11 +62,39 @@ public class ServerDiscovery : MonoBehaviour
         discoveredServersText.text = $"Selected server: {serverIP}";
         ConnectAndReceiveFiles(serverIP);
     }
+    public void DeleteFilesInDirectory()
+    {
+        try
+        {
+            // Verificar si el directorio existe
+            if (Directory.Exists(Application.persistentDataPath + "/Commands" + "/" + commandSender.serverIP))
+            {
+                // Obtener la lista de archivos en el directorio
+                string[] files = Directory.GetFiles(Application.persistentDataPath + "/Commands" + "/" + commandSender.serverIP);
 
+                // Iterar sobre cada archivo y eliminarlo
+                foreach (string file in files)
+                {
+                    File.Delete(file);
+                }
+
+                Debug.Log("Todos los archivos en el directorio han sido eliminados.");
+            }
+            else
+            {
+                Debug.LogWarning("El directorio no existe.");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Error al eliminar archivos: " + e.Message);
+        }
+    }
     public async void ConnectAndReceiveFiles(string serverIP)
     {
         try
         {
+            DeleteFilesInDirectory();
             using (TcpClient client = new TcpClient())
             {
                 Debug.Log("Connecting to server...");
@@ -96,6 +124,7 @@ public class ServerDiscovery : MonoBehaviour
 
     private async Task ReceiveFiles(NetworkStream stream)
     {
+
         while (true)
         {
             // Leer la longitud del nombre del archivo
@@ -138,8 +167,8 @@ public class ServerDiscovery : MonoBehaviour
 
     private void SaveFile(string fileName, byte[] fileContent)
     {
-        if (!Directory.Exists(Application.dataPath + "/Commands" + "/" + commandSender.serverIP)) Directory.CreateDirectory(Application.dataPath + "/Commands" + "/" + commandSender.serverIP);
-        string filePath = Path.Combine(Application.dataPath+"/Commands"+"/"+commandSender.serverIP, fileName);
+        if (!Directory.Exists(Application.persistentDataPath + "/Commands" + "/" + commandSender.serverIP)) Directory.CreateDirectory(Application.persistentDataPath + "/Commands" + "/" + commandSender.serverIP);
+        string filePath = Path.Combine(Application.persistentDataPath + "/Commands"+"/"+commandSender.serverIP, fileName);
         File.WriteAllBytes(filePath, fileContent);
         Debug.Log($"File saved: {filePath}");
     }
