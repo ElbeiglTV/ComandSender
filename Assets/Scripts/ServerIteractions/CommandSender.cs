@@ -15,7 +15,7 @@ public class CommandSender : MonoBehaviour
 
     void Start()
     {
-        sendButton.onClick.AddListener(SendCommand); // Añade un listener para manejar el click del botón de enviar
+       // sendButton.onClick.AddListener(SendCommand); // Añade un listener para manejar el click del botón de enviar
     }
 
     public void SetServerIP(string ip)
