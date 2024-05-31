@@ -589,7 +589,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: acbfdbc248a79864cbb6a8fb2a60915f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  folderPath: Commands
   sender: {fileID: 473177839}
   CommandButtonPrefab: {fileID: 4625962951468751535, guid: 2b1f76e6cdccee2499ffce72619147fd, type: 3}
   CommandButtonParent: {fileID: 1574205977}

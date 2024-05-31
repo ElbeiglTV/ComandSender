@@ -1,1 +1,0 @@
-start C:\Users\Alumno\Documents\GitHub\ComandSender\Assets\ServerAppPython\commands\PrograminMode.Bat
